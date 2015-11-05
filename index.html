@@ -1,3 +1,67 @@
 <!DOCTYPE html>
+<head>
 <meta charset="utf-8">
-1st bl.ock
+</head>
+<script type="text/javascript" src="remix.js"></script>
+<body>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>	
+<script>
+// Code template is from Paul Lamere + tkell (Thor) + Echonest
+// https://github.com/echonest/remix.js/blob/master/examples/one.html
+// Song is public domain from Archive.org
+// https://archive.org/details/BeethovensSymphonyNo.9_51
+
+// First-beat extraction and assembly
+// You will need to supply your Echo Nest API key, the trackID, and a URL to the track.
+// The supplied track can be found in the audio subdirectory.
+var apiKey = 'FILDTEOIK2HBORODV'; // provided at https://github.com/echonest/remix.js/blob/master/examples/two.html
+var trackID = 'TRCYWPQ139279B3308';
+var trackURL = 'BeethovensSymphonyNo9scherzo.mp3'
+var remixer;
+var player;
+var track;
+var remixed;
+function init() {
+    var contextFunction = window.AudioContext || window.webkitAudioContext;
+    if (contextFunction === undefined) {
+        $("#info").text("Sorry, this app needs advanced web audio. Your browser doesn't"
+            + " support it. Try the latest version of Chrome?");
+    } else {
+        var context = new contextFunction();
+        remixer = createJRemixer(context, $, apiKey);
+        player = remixer.getPlayer();
+        $("#info").text("Loading analysis data...");
+        remixer.remixTrackById(trackID, trackURL, function(t, percent) {
+            track = t;
+            $("#info").text(percent + "% of the track loaded");
+            if (percent == 100) {
+                $("#info").text(percent + "% of the track loaded, remixing...");
+            }
+            if (track.status == 'ok') {
+                remixed = new Array();
+                // Do the remixing here!
+                for (var i=0; i < track.analysis.beats.length; i++) {
+                    if (i % 4 == 0) {
+                        remixed.push(track.analysis.beats[i])
+                    }
+                }
+                $("#info").text("Remix complete!");
+            }
+        });
+    }
+}
+window.onload = init;
+</script>
+<div>-------------------------------------------------------------------------------------</div>
+<div>This is part of a series attempting to run remix.js scripts on bl.ocks.org</div>
+<div><a href='https://github.com/echonest/remix.js'>https://github.com/echonest/remix.js</a></div>
+<div>-------------------------------------------------------------------------------------</div>
+<br>
+
+Welcome to One.html
+<div id='info'> </div>
+<button onClick="player.play(0, remixed);">Play!</button>
+<button onClick="player.stop()">Stop!</button>
+</body>
+
+</html>
