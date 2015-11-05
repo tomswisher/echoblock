@@ -14,20 +14,29 @@
 // First-beat extraction and assembly
 // You will need to supply your Echo Nest API key, the trackID, and a URL to the track.
 // The supplied track can be found in the audio subdirectory.
+var echonestAPIKey;
 var trackID = 'TRCYWPQ139279B3308';
 var trackURL = 'BeethovensSymphonyNo9scherzo.mp3'
 var remixer;
 var player;
 var track;
 var remixed;
+
 function init() {
+	echonestAPIKey = localStorage.getItem('echonestAPIKey') || '';
+	$('#echonestAPIKeyForm').val(echonestAPIKey);
+}
+
+function main() {
+	echonestAPIKey = $('#echonestAPIKeyForm').val();
+	localStorage.setItem('echonestAPIKey', echonestAPIKey);
     var contextFunction = window.AudioContext || window.webkitAudioContext;
     if (contextFunction === undefined) {
         $("#info").text("Sorry, this app needs advanced web audio. Your browser doesn't"
             + " support it. Try the latest version of Chrome?");
     } else {
         var context = new contextFunction();
-        remixer = createJRemixer(context, $, $('#apiKeyForm').val());
+        remixer = createJRemixer(context, $, echonestAPIKey);
         player = remixer.getPlayer();
         $("#info").text("Loading analysis data...");
         remixer.remixTrackById(trackID, trackURL, function(t, percent) {
@@ -49,6 +58,9 @@ function init() {
         });
     }
 }
+
+window.onload = init;
+
 </script>
 <div>-------------------------------------------------------------------------------------</div>
 <div>This is part of a series attempting to run remix.js scripts on bl.ocks.org</div>
@@ -58,9 +70,9 @@ function init() {
 
 Welcome to One.html
 <br>
-Your Echonest API Key: <input type='form' id='apiKeyForm' length='100'></input>
+Your Echonest API Key: <input type='form' id='echonestAPIKeyForm' length='100'></input>
 <br>
-<button onClick='init()'>Initialize</button>
+<button onClick='main()'>Initialize</button>
 <div id='info'> </div>
 <button onClick="player.play(0, remixed);">Play!</button>
 <button onClick="player.stop()">Stop!</button>
