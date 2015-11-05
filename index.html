@@ -14,7 +14,6 @@
 // First-beat extraction and assembly
 // You will need to supply your Echo Nest API key, the trackID, and a URL to the track.
 // The supplied track can be found in the audio subdirectory.
-var apiKey = 'FILDTEOIK2HBORODV'; // provided at https://github.com/echonest/remix.js/blob/master/examples/two.html
 var trackID = 'TRCYWPQ139279B3308';
 var trackURL = 'BeethovensSymphonyNo9scherzo.mp3'
 var remixer;
@@ -28,7 +27,7 @@ function init() {
             + " support it. Try the latest version of Chrome?");
     } else {
         var context = new contextFunction();
-        remixer = createJRemixer(context, $, apiKey);
+        remixer = createJRemixer(context, $, $('#apiKeyForm').val());
         player = remixer.getPlayer();
         $("#info").text("Loading analysis data...");
         remixer.remixTrackById(trackID, trackURL, function(t, percent) {
@@ -50,7 +49,6 @@ function init() {
         });
     }
 }
-window.onload = init;
 </script>
 <div>-------------------------------------------------------------------------------------</div>
 <div>This is part of a series attempting to run remix.js scripts on bl.ocks.org</div>
@@ -59,6 +57,10 @@ window.onload = init;
 <br>
 
 Welcome to One.html
+<br>
+Your Echonest API Key: <input type='form' id='apiKeyForm' length='100'></input>
+<br>
+<button onClick='init()'>Initialize</button>
 <div id='info'> </div>
 <button onClick="player.play(0, remixed);">Play!</button>
 <button onClick="player.stop()">Stop!</button>
