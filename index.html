@@ -2,8 +2,9 @@
 <head>
 <meta charset="utf-8">
 </head>
-<script type="text/javascript" src="remix.js"></script>
 <body>
+<script type="text/javascript" src="remix.js"></script>
+<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>	
 <script>
 // Code template is from Paul Lamere + tkell (Thor) + Echonest
@@ -46,17 +47,70 @@ function main() {
                 $("#info").text(percent + "% of the track loaded, remixing...");
             }
             if (track.status == 'ok') {
-                remixed = new Array();
+                remixed = [];
                 // Do the remixing here!
                 for (var i=0; i < track.analysis.beats.length; i++) {
-                    if (i % 4 == 0) {
-                        remixed.push(track.analysis.beats[i])
+                    if (i % 4 === 0) {
+                        remixed.push(track.analysis.beats[i]);
                     }
                 }
                 $("#info").text("Remix complete!");
+                var index = 0;
+                DrawRects(track.analysis.segments, 'gray', index++);
+                console.log(index);
+                DrawRects(track.analysis.tatums, 'blue', index++);
+                console.log(index);
+                DrawRects(track.analysis.beats, 'orange', index++);
+                console.log(index);
+                DrawRects(track.analysis.bars, 'green', index++);
+                console.log(index);
+                DrawRects(track.analysis.sections, 'red', index++);
+                console.log(index);
             }
         });
     }
+}
+
+function DrawRects(echoData, fillColor, level) {
+    var widthScale = 100;
+    var duration = track.audio_summary.duration;
+    var svgWidth = duration * widthScale;
+    var svgHeight = 100;
+    var gOrigin = d3.select('div#d3-stage').select('svg')
+        .attr('width', svgWidth)
+        .attr('height', svgHeight)
+        .append('g')
+            .attr('transform', 'translate(0,'+String(level*15)+')');
+    gOrigin.selectAll('.echo-rect').data(echoData).enter()
+        .append('rect')
+            .classed('echo-rect', true)
+            .attr('x', function(d) { return d.start * widthScale; })
+            .attr('y', 0)
+            .attr('width', function(d) {
+                d.originalWidth = d.duration * widthScale;
+                return d.duration * widthScale;
+            })
+            .attr('height', 10)
+            .style('fill', fillColor)
+            .on('click', function(d) {
+                player.stop();
+                var currentlyPlaying = d.playing;
+                d3.select('div#d3-stage').selectAll('rect.echo-rect').interrupt();
+                d3.select('div#d3-stage').selectAll('rect.echo-rect')
+                    .style('opacity', 1)
+                    .attr('width', function(d) { return d.originalWidth; })
+                    .each(function(d) { d.playing = false; });
+                if (!currentlyPlaying) {
+                    player.play(0, d);
+                    d3.select(this)
+                        .style('opacity', 0)
+                        .attr('width', 0)
+                        .transition().ease('linear').duration(function(d) { return 1000*d.duration; })
+                            .style('opacity', 1)
+                            .attr('width', function(d) { return d.originalWidth; })
+                            .each('end', function(d) { d.playing = false; });
+                }
+            });
 }
 
 window.onload = init;
@@ -76,6 +130,10 @@ Your Echonest API Key: <input type='form' id='echonestAPIKeyForm' length='100'><
 <div id='info'> </div>
 <button onClick="player.play(0, remixed);">Play!</button>
 <button onClick="player.stop()">Stop!</button>
+<br><br>
+<div id="d3-stage">
+<svg></svg>
+</div>
 </body>
 
 </html>
