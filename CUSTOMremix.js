@@ -313,10 +313,12 @@ function createJRemixer(context, jquery, apiKey) {
             }
             effects[i].connect(context.destination);
 
-            function queuePlay(when, q) {
+            // function queuePlay(when, q) {
+            function queuePlay(when, q, customObj) { //~
                 audioGain.gain.value = 1;
                 if (isAudioBuffer(q)) {
-                    var audioSource = context.createBufferSource();
+                    // var audioSource = context.createBufferSource();
+                    audioSource = context.createBufferSource(); //~
                     audioSource.buffer = q;
                     audioSource.connect(audioGain);
                     currentlyQueued.push(audioSource);
@@ -336,11 +338,13 @@ function createJRemixer(context, jquery, apiKey) {
                         when = context.currentTime;
                     }
                     for (var i = 0; i < q.length; i++) {
-                        when = queuePlay(when, q[i]);
+                        // when = queuePlay(when, q[i]);
+                        when = queuePlay(when, q[i], customObj); //~
                     }
                     return when;
                 } else if (isQuantum(q)) {
-                    var audioSource = context.createBufferSource();
+                    // var audioSource = context.createBufferSource();
+                    audioSource = context.createBufferSource(); //~
                     audioSource.buffer = q.track.buffer;
                     audioSource.connect(audioGain);
                     q.audioSource = audioSource;
@@ -349,7 +353,8 @@ function createJRemixer(context, jquery, apiKey) {
 
                     // I need to clean up all these ifs
                     if ("syncBuffer" in q) {
-                        var audioSource = context.createBufferSource();
+                        // var audioSource = context.createBufferSource();
+                        audioSource = context.createBufferSource(); //~
                         audioSource.buffer = q.syncBuffer;
                         audioSource.connect(audioGain);
                         currentlyQueued.push(audioSource);
@@ -380,8 +385,11 @@ function createJRemixer(context, jquery, apiKey) {
             }
 
             var player = {
-                play: function(when, q) {
-                    return queuePlay(0, q);
+                // play: function(when, q, customObj) {
+                play: function(when, q, customObj) { //~
+                    //~ They disabled 'when' due to some kind of overlapping audio issue
+                    // return queuePlay(0, q);
+                    return queuePlay(0, q, customObj); //~
                 },
 
                 addOnPlayCallback: function(callback) {
@@ -392,12 +400,14 @@ function createJRemixer(context, jquery, apiKey) {
                     afterPlayCallback = callback;
                 },
 
-                queue: function(q) {
+                // queue: function(q) {
+                queue: function(q, customObj) { //~
                     var now = context.currentTime;
                     if (now > queueTime) {
                         queueTime = now;
                     }
-                    queueTime = queuePlay(queueTime, q);
+                    // queueTime = queuePlay(queueTime, q);
+                    queueTime = queuePlay(queueTime, q, customObj); //~
                 },
 
                 queueRest: function(duration) {

@@ -24,21 +24,21 @@ div.col-middle {
     width: 100%; /*fraction of a fraction*/
     float: none;
     text-align: center;
-
 }
-div#d3-stage {
+div#d3Stage {
     width: 100%;
+    display: block;
     overflow: scroll;
 }
 rect.echo-rect {
     stroke: white;
-    stroke-width: 2px;
+    stroke-width: 1px;
     cursor: pointer;
 }
 #echonestAPIKeyForm {
     width: 177px;
 }
-#player.paused #pauseButton {
+#player.stopped #stopButton {
     display: none;
 }
 #player.playing #playButton {
@@ -66,22 +66,32 @@ var remixer;
 var remixPlayer;
 var track;
 var remixedArray;
-var maxlevel = 0;
+
+var widthScale = 100;
+var heightScale = 25;
+var maxLevel = 0;
+var maxDuration = 0;
+var lastQuantaOnTop = true;
+
+var d3Stage;
 
 function InitializePage() {
     echonestAPIKey = localStorage.getItem('echonestAPIKey') || '';
     $('#echonestAPIKeyForm').val(echonestAPIKey);
     $('#trackURLForm').text(trackURL);
+    // AnalyzeTrack(); // debug
 }
 
 function AnalyzeTrack() {
+    var context;
     echonestAPIKey = $('#echonestAPIKeyForm').val();
     localStorage.setItem('echonestAPIKey', echonestAPIKey);
     var contextFunction = window.AudioContext || window.webkitAudioContext;
     if (contextFunction === undefined) {
         $('#analysisText').text('Sorry, this app needs advanced web audio. Your browser does not support it. Try the latest version of Chrome?');
     } else {
-        var context = new contextFunction();
+        d3.select('#analyzeButton').remove();
+        context = new contextFunction();
         remixer = createJRemixer(context, $, echonestAPIKey);
         remixPlayer = remixer.getPlayer();
         $('#analysisText').text('Analyzing your track...');
@@ -103,72 +113,145 @@ function AnalyzeTrack() {
                 $('#analysisText').text('Ready');
                 d3.selectAll('.not-loaded').classed('not-loaded', false);
                 var index = 0;
-                DrawRects(track.analysis.segments, 'gray', index++);
-                DrawRects(track.analysis.tatums, 'blue', index++);
-                DrawRects(track.analysis.beats, 'orange', index++);
-                DrawRects(track.analysis.bars, 'green', index++);
-                DrawRects(track.analysis.sections, 'red', index++);
+                DrawQuanta(track, 'seconds', 'black', index++);
+                DrawQuanta(track, 'sections', 'red', index++);
+                DrawQuanta(track, 'bars', 'green', index++);
+                DrawQuanta(track, 'beats', 'orange', index++);
+                DrawQuanta(track, 'tatums', 'blue', index++);
+                DrawQuanta(track, 'segments', 'gray', index++);
+                UpdateQuanta();
             }
         });
     }
 }
 
-function DrawRects(echoData, fillColor, level) {
-    var widthScale = 100;
+function DrawQuanta(track, quantaType, fillColor, level) {
+    var analysisArray = track.analysis[quantaType];
     var duration = track.audio_summary.duration;
-    var svgWidth = duration * widthScale;
-    if (level > maxlevel) {
-        maxlevel = level;
-    }
-    var svgHeight = 30*(maxlevel+1);
-    var gOrigin = d3.select('div#d3Stage').select('svg')
+    maxLevel = level > maxLevel ? level : maxLevel;
+    maxDuration = duration > maxDuration ? duration : maxDuration;
+    var svgWidth = maxDuration * widthScale;
+    var svgHeight = (maxLevel+1) * heightScale;
+    d3Stage = d3.select('div#d3Stage');
+    var dataArray;
+    var gOrigin = d3Stage.select('svg')
         .attr('width', svgWidth)
         .attr('height', svgHeight)
         .append('g')
-            .attr('transform', 'translate(0,'+String(level*30)+')');
-    gOrigin.selectAll('.echo-rect').data(echoData).enter()
-        .append('rect')
-            .classed('echo-rect', true)
-            .attr('x', function(d) { return d.start * widthScale; })
-            .attr('y', 0)
-            .attr('width', function(d) {
-                d.originalWidth = d.duration * widthScale;
-                return d.duration * widthScale;
-            })
-            .attr('height', 30)
-            .style('fill', fillColor)
-            .on('click', function(d) {
-                remixPlayer.stop();
-                var currentlyPlaying = d.playing;
-                d3.select('div#d3-stage').selectAll('rect.echo-rect').interrupt();
-                d3.select('div#d3-stage').selectAll('rect.echo-rect')
-                    .style('opacity', 1)
-                    .attr('width', function(d) { return d.originalWidth; })
-                    .each(function(d) { d.playing = false; });
-                if (!currentlyPlaying) {
-                    remixPlayer.play(0, d);
-                    d3.select(this)
-                        .style('opacity', 0)
-                        .attr('width', 0)
-                        .transition().ease('linear').duration(function(d) { return 1000*d.duration; })
-                            .style('opacity', 1)
-                            .attr('width', function(d) { return d.originalWidth; })
-                            .each('end', function(d) { d.playing = false; });
-                }
-            });
+            .datum({'level':level, 'analysisArray':analysisArray})
+            .classed('echo-group', true)
+            .attr('transform', 'translate(' + '0' + ',' + String(-1*heightScale) + ')');
+    if (quantaType === 'seconds') {
+        dataArray = PythonRange(Math.floor(duration)).map(function(el) {
+            return {'quantum':{'start':el}}; // simulate a quanta object
+        });
+        gOrigin.selectAll('.echo-second').data(dataArray).enter()
+            .append('text')
+                .classed('echo-text', true)
+                .each(function(d) { d.analysisArrayLength = Math.floor(duration); })
+                .attr('x', -1*widthScale)
+                .attr('y', 0.75*heightScale)
+                .text(function(d) { return d.quantum.start; });    
+        return;
+    }
+    else {
+        dataArray = analysisArray.map(function(el) { return {'quantum':el}; })
+        gOrigin.selectAll('.echo-rect').data(dataArray).enter()
+            .append('rect')
+                .classed('echo-rect', true)
+                .each(function(d) {
+                    d.analysisArrayLength = analysisArray.length;
+                    d.playing = false;
+                })
+                .attr('x', 0*widthScale)
+                .attr('y', 0)
+                .attr('width', function(d) {
+                    d.originalWidth = d.quantum.duration * widthScale;
+                    return d.quantum.duration * widthScale;
+                })
+                .attr('height', heightScale)
+                .style('fill', fillColor)
+                .on('click', function(d) {
+                    remixPlayer.stop();
+                    var currentlyPlaying = d.playing;
+                    d3.select('div#d3Stage').selectAll('rect.echo-rect').interrupt();
+                    d3.select('div#d3Stage').selectAll('rect.echo-rect')
+                        .style('opacity', 1)
+                        .attr('x', function(d) { return d.quantum.start * widthScale; })
+                        .attr('width', function(d) { return d.originalWidth; })
+                        .each(function(d) { d.playing = false; });
+                    if (!currentlyPlaying) {
+                        remixPlayer.play(0, d.quantum);
+                        d.playing = true;
+                        d3.select(this)
+                            .style('opacity', 0)
+                            .attr('width', 0)
+                            .transition().ease('linear').duration(function(d) { return 1000*d.quantum.duration; })
+                                .style('opacity', 1)
+                                .attr('width', function(d) { return d.originalWidth; })
+                                .each('end', function(d) { d.playing = false; });
+                    }
+                });
+    }
+}
+
+function UpdateQuanta() {
+    var transitionEaseX = 'cubic-out', transitionEaseY = 'bounce', easeX = 'linear';
+    var tempDatum;
+    d3Stage.selectAll('g.echo-group').transition()
+        .ease(transitionEaseY)
+        .duration(function(d) { return 1000; })
+        .attr('transform', function(d) {
+            var yOffset = lastQuantaOnTop ? (maxLevel-d.level)*heightScale : d.level*heightScale; 
+            return 'translate(' + '0' + ',' + String(yOffset) + ')';
+        })
+        .call(AllTransitionsEnded, function() {
+            d3Stage.selectAll('rect.echo-rect, text.echo-text').transition()
+                .ease(transitionEaseX)        
+                .duration(2*1000)
+                .delay(function(d,i) { return (i/d.analysisArrayLength)*1000; })
+                .attr('x', function(d) { return d.quantum.start * widthScale; });
+        });
 }
 
 function UpdatePlayer(currentPlayer, action, quantaArray, startTime) {
     var curTime = currentPlayer.curTime();
     if (action === 'play') {
         currentPlayer.play(startTime, quantaArray);
+        d3.select('#player').classed('playing', true).classed('stopped', false);
     }
-    else if (action === 'pause') {
+    else if (action === 'stop') {
         currentPlayer.stop();
+        d3.select('#player').classed('playing', false).classed('stopped', true);
     }
     else {
         return;
     }
+}
+
+function PythonRange(length) {
+    // Array(null) is [null] and not [], so we need to screen out null
+    if (!isFinite(length) || length%1!==0 || length<0 || length===null) { // must be a number and a non-negative integer
+        return [];
+    }
+    var arrayOfUndefined = Array.apply(null, Array(length)); // 'this' doesn't matter here
+    return arrayOfUndefined.map(function(_, i) { return i; });
+}
+
+function AllTransitionsEnded(transition, callback) {
+    var n = 0;
+    transition
+        .each(function() {
+            n += 1;
+        })
+        .each('end', function() {
+            n -= 1;
+            if (n === 0) {
+                callback.apply(this, arguments);
+            }
+        })
+
+
 }
 
 window.onload = InitializePage;
@@ -194,23 +277,23 @@ window.onload = InitializePage;
 </div>
 <br><br>
 <div class='row-full'>
-    <div class='col-middle'>
+    <div class='col-middle' id='analyzeButton'>
         <button onClick='AnalyzeTrack()'>Analyze Your Track</button>
     </div>
     <div class='col-middle' id='analysisText'>
     </div>
 </div>
 <br>
-<div class='row-full not-loaded paused' id='player'>
+<div class='row-full not-loaded stopped' id='player'>
     <div class='col-middle' id='playButton'>
         <button onClick='UpdatePlayer(remixPlayer, "play", remixedArray, 0);'>Play Your Track</button>
     </div>
-    <div class='col-middle' id='pauseButton'>
-        <button onClick='UpdatePlayer(remixPlayer, "stop", remixedArray, 0);'>Pause Your Track</button>
+    <div class='col-middle' id='stopButton'>
+        <button onClick='UpdatePlayer(remixPlayer, "stop", remixedArray, 0);'>Stop Your Track</button>
     </div>
 </div>
 <br><br><br>
-<div class='row-full not-loaded' id='d3Stage'>
+<div class='not-loaded' id='d3Stage'>
     <svg></svg>
 </div>
 </body>
