@@ -23,9 +23,6 @@ rect.echo-rect {
 // Song is public domain from Archive.org
 // https://archive.org/details/BeethovensSymphonyNo.9_51
 
-// First-beat extraction and assembly
-// You will need to supply your Echo Nest API key, the trackID, and a URL to the track.
-// The supplied track can be found in the audio subdirectory.
 var echonestAPIKey;
 var trackID = 'TRCYWPQ139279B3308';
 var trackURL = 'BeethovensSymphonyNo9scherzo.mp3'
@@ -50,22 +47,22 @@ function main() {
         var context = new contextFunction();
         remixer = createJRemixer(context, $, echonestAPIKey);
         player = remixer.getPlayer();
-        $("#info").text("Loading analysis data...");
+        $("#info").text("Analyzing your track...");
         remixer.remixTrackById(trackID, trackURL, function(t, percent) {
             track = t;
-            $("#info").text(percent + "% of the track loaded");
+            console.log(percent, parseFloat(percent), isNaN(percent));
+            $("#info").text('Analyzing at ' + percent + "%");
             if (percent == 100) {
-                $("#info").text(percent + "% of the track loaded, remixing...");
+                $("#info").text("Analysis is finished. Now loading...");
             }
             if (track.status == 'ok') {
-                remixed = [];
-                // Do the remixing here!
-                for (var i=0; i < track.analysis.beats.length; i++) {
-                    if (i % 4 === 0) {
-                        remixed.push(track.analysis.beats[i]);
-                    }
-                }
-                $("#info").text("Remix complete!");
+                // remixed = [];
+                // for (var i=0; i < track.analysis.beats.length; i++) {
+                //     if (i % 4 === 0) {
+                //         remixed.push(track.analysis.beats[i]);
+                //     }
+                // }
+                $("#info").text("Ready to play!");
                 var index = 0;
                 DrawRects(track.analysis.segments, 'gray', index++);
                 console.log(index);
@@ -127,6 +124,7 @@ function DrawRects(echoData, fillColor, level) {
 window.onload = init;
 
 </script>
+<br>
 Enter your Echonest API key: <input type='form' id='echonestAPIKeyForm'></input>
 <br><br>
 <button onClick='main()'>Initialize</button>
