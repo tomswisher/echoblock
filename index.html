@@ -2,21 +2,57 @@
 <html>
 <head>
 <title>Echoblock</title>
-<meta charset="utf-8">
+<meta charset='utf-8'>
 <style>
+div.row-full {
+    display: block;
+    min-width: 460px;
+    width: 50%;
+    height: auto;
+}
+div.col-left {
+    width: 48%; /*fraction of a fraction*/
+    float: left;
+    text-align: right;
+}
+div.col-right {
+    width: 48%; /*fraction of a fraction*/
+    float: right;
+    text-align: left;
+}
+div.col-middle {
+    width: 100%; /*fraction of a fraction*/
+    float: none;
+    text-align: center;
+
+}
 div#d3-stage {
+    width: 100%;
     overflow: scroll;
 }
 rect.echo-rect {
     stroke: white;
     stroke-width: 2px;
+    cursor: pointer;
+}
+#echonestAPIKeyForm {
+    width: 177px;
+}
+#player.paused #pauseButton {
+    display: none;
+}
+#player.playing #playButton {
+    display: none;
+}
+.not-loaded {
+    visibility: hidden;
 }
 </style>
 </head>
 <body>
-<script type="text/javascript" src="remix.js"></script>
-<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>  
+<script type='text/javascript' src='CUSTOMremix.js'></script>
+<script src='//d3js.org/d3.v3.min.js' charset='utf-8'></script>
+<script src='//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js'></script>  
 <script>
 // Adapted from remix.js example code by Paul Lamere + tkell (Thor) + Echonest
 // https://github.com/echonest/remix.js/blob/master/examples
@@ -27,53 +63,51 @@ var echonestAPIKey;
 var trackID = 'TRCYWPQ139279B3308';
 var trackURL = 'BeethovensSymphonyNo9scherzo.mp3'
 var remixer;
-var player;
+var remixPlayer;
 var track;
-var remixed;
+var remixedArray;
+var maxlevel = 0;
 
-function init() {
+function InitializePage() {
     echonestAPIKey = localStorage.getItem('echonestAPIKey') || '';
     $('#echonestAPIKeyForm').val(echonestAPIKey);
+    $('#trackURLForm').text(trackURL);
 }
 
-function main() {
+function AnalyzeTrack() {
     echonestAPIKey = $('#echonestAPIKeyForm').val();
     localStorage.setItem('echonestAPIKey', echonestAPIKey);
     var contextFunction = window.AudioContext || window.webkitAudioContext;
     if (contextFunction === undefined) {
-        $("#info").text("Sorry, this app needs advanced web audio. Your browser doesn't"
-            + " support it. Try the latest version of Chrome?");
+        $('#analysisText').text('Sorry, this app needs advanced web audio. Your browser does not support it. Try the latest version of Chrome?');
     } else {
         var context = new contextFunction();
         remixer = createJRemixer(context, $, echonestAPIKey);
-        player = remixer.getPlayer();
-        $("#info").text("Analyzing your track...");
-        remixer.remixTrackById(trackID, trackURL, function(t, percent) {
-            track = t;
-            console.log(percent, parseFloat(percent), isNaN(percent));
-            $("#info").text('Analyzing at ' + percent + "%");
+        remixPlayer = remixer.getPlayer();
+        $('#analysisText').text('Analyzing your track...');
+        remixer.remixTrackById(trackID, trackURL, function(returnedTrack, percent) {
+            track = returnedTrack;
+            if (isFinite(percent)) {
+                $('#analysisText').text('Analyzing at ' + percent + '%');
+            }
             if (percent == 100) {
-                $("#info").text("Analysis is finished. Now loading...");
+                $('#analysisText').text('Analysis is finished, loading audio...');
             }
             if (track.status == 'ok') {
-                // remixed = [];
-                // for (var i=0; i < track.analysis.beats.length; i++) {
-                //     if (i % 4 === 0) {
-                //         remixed.push(track.analysis.beats[i]);
-                //     }
-                // }
-                $("#info").text("Ready to play!");
+                remixedArray = [];
+                for (var i=0; i < track.analysis.beats.length; i++) {
+                    // if (i % 4 === 0) {
+                        remixedArray.push(track.analysis.beats[i]);
+                    // }
+                }
+                $('#analysisText').text('Ready');
+                d3.selectAll('.not-loaded').classed('not-loaded', false);
                 var index = 0;
                 DrawRects(track.analysis.segments, 'gray', index++);
-                console.log(index);
                 DrawRects(track.analysis.tatums, 'blue', index++);
-                console.log(index);
                 DrawRects(track.analysis.beats, 'orange', index++);
-                console.log(index);
                 DrawRects(track.analysis.bars, 'green', index++);
-                console.log(index);
                 DrawRects(track.analysis.sections, 'red', index++);
-                console.log(index);
             }
         });
     }
@@ -83,12 +117,15 @@ function DrawRects(echoData, fillColor, level) {
     var widthScale = 100;
     var duration = track.audio_summary.duration;
     var svgWidth = duration * widthScale;
-    var svgHeight = 100;
-    var gOrigin = d3.select('div#d3-stage').select('svg')
+    if (level > maxlevel) {
+        maxlevel = level;
+    }
+    var svgHeight = 30*(maxlevel+1);
+    var gOrigin = d3.select('div#d3Stage').select('svg')
         .attr('width', svgWidth)
         .attr('height', svgHeight)
         .append('g')
-            .attr('transform', 'translate(0,'+String(level*15)+')');
+            .attr('transform', 'translate(0,'+String(level*30)+')');
     gOrigin.selectAll('.echo-rect').data(echoData).enter()
         .append('rect')
             .classed('echo-rect', true)
@@ -98,10 +135,10 @@ function DrawRects(echoData, fillColor, level) {
                 d.originalWidth = d.duration * widthScale;
                 return d.duration * widthScale;
             })
-            .attr('height', 10)
+            .attr('height', 30)
             .style('fill', fillColor)
             .on('click', function(d) {
-                player.stop();
+                remixPlayer.stop();
                 var currentlyPlaying = d.playing;
                 d3.select('div#d3-stage').selectAll('rect.echo-rect').interrupt();
                 d3.select('div#d3-stage').selectAll('rect.echo-rect')
@@ -109,7 +146,7 @@ function DrawRects(echoData, fillColor, level) {
                     .attr('width', function(d) { return d.originalWidth; })
                     .each(function(d) { d.playing = false; });
                 if (!currentlyPlaying) {
-                    player.play(0, d);
+                    remixPlayer.play(0, d);
                     d3.select(this)
                         .style('opacity', 0)
                         .attr('width', 0)
@@ -121,20 +158,60 @@ function DrawRects(echoData, fillColor, level) {
             });
 }
 
-window.onload = init;
+function UpdatePlayer(currentPlayer, action, quantaArray, startTime) {
+    var curTime = currentPlayer.curTime();
+    if (action === 'play') {
+        currentPlayer.play(startTime, quantaArray);
+    }
+    else if (action === 'pause') {
+        currentPlayer.stop();
+    }
+    else {
+        return;
+    }
+}
 
+window.onload = InitializePage;
 </script>
+
+<br><br>
+<div class='row-full'>
+    <div class='text-box col-left'>
+        Your Track:
+    </div>
+    <div class='text-box col-right' id='trackURLForm'>
+        ???
+    </div>
+</div>
 <br>
-Enter your Echonest API key: <input type='form' id='echonestAPIKeyForm'></input>
+<div class='row-full'>
+    <div class='text-box col-left'>
+        Your Echonest API key:
+    </div>
+    <div class='text-box col-right'>
+        <input type='form' name='echonestAPIKeyForm' id='echonestAPIKeyForm' value='???'></input>
+    </div>
+</div>
 <br><br>
-<button onClick='main()'>Initialize</button>
-<br><br>
-<div id='info'> </div>
-<button onClick="player.play(0, remixed);">Play!</button>
-<button onClick="player.stop()">Stop!</button>
-<br><br>
-<div id="d3-stage">
-<svg></svg>
+<div class='row-full'>
+    <div class='col-middle'>
+        <button onClick='AnalyzeTrack()'>Analyze Your Track</button>
+    </div>
+    <div class='col-middle' id='analysisText'>
+    </div>
+</div>
+<br>
+<div class='row-full not-loaded paused' id='player'>
+    <div class='col-middle' id='playButton'>
+        <button onClick='UpdatePlayer(remixPlayer, "play", remixedArray, 0);'>Play Your Track</button>
+    </div>
+    <div class='col-middle' id='pauseButton'>
+        <button onClick='UpdatePlayer(remixPlayer, "stop", remixedArray, 0);'>Pause Your Track</button>
+    </div>
+</div>
+<br><br><br>
+<div class='row-full not-loaded' id='d3Stage'>
+    <svg></svg>
 </div>
 </body>
 
