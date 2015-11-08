@@ -16,10 +16,10 @@ rect.echo-rect {
 <body>
 <script type="text/javascript" src="remix.js"></script>
 <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>	
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>  
 <script>
-// Code template is from Paul Lamere + tkell (Thor) + Echonest
-// https://github.com/echonest/remix.js/blob/master/examples/one.html
+// Adapted from remix.js example code by Paul Lamere + tkell (Thor) + Echonest
+// https://github.com/echonest/remix.js/blob/master/examples
 // Song is public domain from Archive.org
 // https://archive.org/details/BeethovensSymphonyNo.9_51
 
@@ -35,13 +35,13 @@ var track;
 var remixed;
 
 function init() {
-	echonestAPIKey = localStorage.getItem('echonestAPIKey') || '';
-	$('#echonestAPIKeyForm').val(echonestAPIKey);
+    echonestAPIKey = localStorage.getItem('echonestAPIKey') || '';
+    $('#echonestAPIKeyForm').val(echonestAPIKey);
 }
 
 function main() {
-	echonestAPIKey = $('#echonestAPIKeyForm').val();
-	localStorage.setItem('echonestAPIKey', echonestAPIKey);
+    echonestAPIKey = $('#echonestAPIKeyForm').val();
+    localStorage.setItem('echonestAPIKey', echonestAPIKey);
     var contextFunction = window.AudioContext || window.webkitAudioContext;
     if (contextFunction === undefined) {
         $("#info").text("Sorry, this app needs advanced web audio. Your browser doesn't"
