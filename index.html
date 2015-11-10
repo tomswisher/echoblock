@@ -4,10 +4,13 @@
 <title>Echoblock</title>
 <meta charset='utf-8'>
 <style>
+body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
 div.row-full {
     display: block;
     min-width: 460px;
-    width: 50%;
+    width: 460px;
     height: auto;
 }
 div.col-left {
@@ -57,6 +60,9 @@ rect.echo-rect {
 <script src='//d3js.org/d3.v3.min.js' charset='utf-8'></script>
 <script src='//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js'></script>  
 <script>
+
+'use strict';
+
 // Adapted from remix.js example code by Paul Lamere + tkell (Thor) + Echonest
 // https://github.com/echonest/remix.js/blob/master/examples
 // Song is public domain from Archive.org
@@ -154,7 +160,7 @@ function DrawQuanta(track, quantaType, fillColor, level) {
                 .each(function(d) { d.analysisArrayLength = Math.floor(duration); })
                 .attr('x', -1*widthUnit)
                 .attr('y', 0.75*heightUnit)
-                .text(function(d) { return d.quantum.start; });    
+                .text(function(d) { return [d.quantum.start,' s'].join(''); });    
         return;
     }
     else {
@@ -272,7 +278,7 @@ window.onload = InitializePage;
 <br>
 <div class='row-full'>
     <div class='text-box col-left'>
-        Your Echonest API key:
+        Your Echonest API Key:
     </div>
     <div class='text-box col-right'>
         <input type='form' name='echonestAPIKeyForm' id='echonestAPIKeyForm' value='???'></input>
