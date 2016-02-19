@@ -31,7 +31,9 @@ function InitializePage() {
         $('#trackURLFile').trigger('click');
     });
 
-    $('#trackURLFile').change(function() {
+    $('#trackURLFile').change(function(event) {
+        console.log(event.target.files[0].name);
+        console.log(event.target.files[0].webkitRelativePath);
         trackURL = this.value.split('\\').pop();
         $('#trackURLForm').val(trackURL);
     });
