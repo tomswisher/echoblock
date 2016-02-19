@@ -39,6 +39,7 @@ function InitializePage() {
 }
 
 function AnalyzeTrack() {
+    d3.select('div#d3Stage').selectAll('svg').selectAll('*').remove();
     var context;
     echonestAPIKey = $('#echonestAPIKeyForm').val();
     localStorage.setItem('echonestAPIKey', echonestAPIKey);
@@ -101,7 +102,7 @@ function DrawQuanta(track, quantaType, fillColor, level) {
             .classed('echo-group', true)
             .attr('transform', 'translate(' + '0' + ',' + String(-1*heightUnit) + ')');
     if (quantaType === 'seconds') {
-        dataArray = PythonRange(Math.floor(duration)).map(function(el) {
+        dataArray = d3.range(Math.floor(duration)).map(function(el) {
             return {'quantum':{'start':el}}; // simulate a quanta object
         });
         gOrigin.selectAll('.echo-second').data(dataArray).enter()
@@ -156,7 +157,6 @@ function DrawQuanta(track, quantaType, fillColor, level) {
 
 function UpdateQuanta() {
     var transitionEaseX = 'cubic-out', transitionEaseY = 'bounce', easeX = 'linear';
-    var tempDatum;
     d3Stage.selectAll('g.echo-group').transition()
         .ease(transitionEaseY)
         .duration(function(d) { return 1000; })
@@ -165,11 +165,16 @@ function UpdateQuanta() {
             return 'translate(' + '0' + ',' + String(yOffset) + ')';
         })
         .call(AllTransitionsEnded, function() {
-            d3Stage.selectAll('rect.echo-rect, text.echo-text').transition()
+            d3Stage.selectAll('g.echo-group').selectAll('rect.echo-rect, text.echo-text').transition()
                 .ease(transitionEaseX)        
-                .duration(2*1000)
-                .delay(function(d,i) { return (i/d.analysisArrayLength)*1000; })
-                .attr('x', function(d) { return d.quantum.start * widthUnit; });
+                // .duration(function(d,i) { return Math.min(4*1000-i, 0); })
+                .duration(3000)
+                // .delay(function(d,i) { return Math.min(4*1000, i); })
+                .delay(function(d,i,j) { return 300*j+(i/d.analysisArrayLength)*1000; })
+                .attr('x', function(d) { return d.quantum.start * widthUnit; })
+                .call(AllTransitionsEnded, function() {
+                    d3.select('#analyzeButton').classed('not-needed', false);
+                });
         });
 }
 
@@ -186,15 +191,6 @@ function UpdatePlayer(currentPlayer, action, quantaArray, startTime) {
     else {
         return;
     }
-}
-
-function PythonRange(length) {
-    // Array(null) is [null] and not [], so we need to screen out null
-    if (!isFinite(length) || length%1!==0 || length<0 || length===null) { // must be a number and a non-negative integer
-        return [];
-    }
-    var arrayOfUndefined = Array.apply(null, Array(length)); // 'this' doesn't matter here
-    return arrayOfUndefined.map(function(_, i) { return i; });
 }
 
 function AllTransitionsEnded(transition, callback) {
