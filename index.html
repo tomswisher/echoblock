@@ -3,276 +3,21 @@
 <head>
 <title>Echoblock</title>
 <meta charset='utf-8'>
-<style>
-body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-}
-div.row-full {
-    display: block;
-    min-width: 460px;
-    width: 460px;
-    height: auto;
-}
-div.col-left {
-    width: 48%; /*fraction of a fraction*/
-    float: left;
-    text-align: right;
-}
-div.col-right {
-    width: 48%; /*fraction of a fraction*/
-    float: right;
-    text-align: left;
-}
-div.col-middle {
-    width: 100%; /*fraction of a fraction*/
-    float: none;
-    text-align: center;
-}
-div#d3Stage {
-    width: 100%;
-    display: block;
-    overflow: scroll;
-}
-rect.echo-rect {
-    stroke: white;
-    stroke-width: 1px;
-    cursor: pointer;
-}
-#echonestAPIKeyForm {
-    width: 177px;
-}
-#player.stopped #stopButton {
-    display: none;
-}
-#player.playing #playButton {
-    display: none;
-}
-.not-loaded {
-    visibility: hidden;
-}
-.not-needed {
-    visibility: hidden;
-}
-</style>
-</head>
-<body>
 <script type='text/javascript' src='CUSTOMremix.js'></script>
 <script src='//d3js.org/d3.v3.min.js' charset='utf-8'></script>
 <script src='//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js'></script>  
-<script>
-
-'use strict';
-
-// Adapted from remix.js example code by Paul Lamere + tkell (Thor) + Echonest
-// https://github.com/echonest/remix.js/blob/master/examples
-// Song is public domain from Archive.org
-// https://archive.org/details/BeethovensSymphonyNo.9_51
-
-var echonestAPIKey;
-var trackID = 'TRCYWPQ139279B3308';
-var trackURL = 'BeethovensSymphonyNo9scherzo.mp3'
-var remixer;
-var remixPlayer;
-var track;
-var remixedArray;
-
-var widthUnit = 100;
-var heightUnit = 25;
-var maxLevel = 0;
-var maxDuration = 0;
-var lastQuantaOnTop = true;
-
-var d3Stage;
-
-function InitializePage() {
-    echonestAPIKey = localStorage.getItem('echonestAPIKey') || '';
-    $('#echonestAPIKeyForm').val(echonestAPIKey);
-    $('#trackURLForm').text(trackURL);
-    // AnalyzeTrack(); // debug
-}
-
-function AnalyzeTrack() {
-    var context;
-    echonestAPIKey = $('#echonestAPIKeyForm').val();
-    localStorage.setItem('echonestAPIKey', echonestAPIKey);
-    var contextFunction = window.AudioContext || window.webkitAudioContext;
-    if (contextFunction === undefined) {
-        $('#analysisText').text('Sorry, this app needs advanced web audio. Your browser does not support it. Try the latest version of Chrome?');
-    } else {
-        d3.select('#analyzeButton').classed('not-needed', true);
-        context = new contextFunction();
-        remixer = createJRemixer(context, $, echonestAPIKey);
-        remixPlayer = remixer.getPlayer();
-        $('#analysisText').text('Analyzing your track...');
-        remixer.remixTrackById(trackID, trackURL, function(returnedTrack, percent) {
-            track = returnedTrack;
-            if (isFinite(percent)) {
-                $('#analysisText').text('Analyzing at ' + percent + '%');
-            }
-            if (percent == 100) {
-                $('#analysisText').text('Analysis is finished, loading audio...');
-            }
-            if (track.status == 'ok') {
-                remixedArray = [];
-                for (var i=0; i < track.analysis.beats.length; i++) {
-                    // if (i % 4 === 0) {
-                        remixedArray.push(track.analysis.beats[i]);
-                    // }
-                }
-                $('#analysisText').text('Ready');
-                d3.selectAll('.not-loaded').classed('not-loaded', false);
-                var index = 0;
-                DrawQuanta(track, 'seconds', 'black', index++);
-                DrawQuanta(track, 'sections', 'red', index++);
-                DrawQuanta(track, 'bars', 'green', index++);
-                DrawQuanta(track, 'beats', 'orange', index++);
-                DrawQuanta(track, 'tatums', 'blue', index++);
-                DrawQuanta(track, 'segments', 'gray', index++);
-                UpdateQuanta();
-            }
-        });
-    }
-}
-
-function DrawQuanta(track, quantaType, fillColor, level) {
-    var analysisArray = track.analysis[quantaType];
-    var duration = track.audio_summary.duration;
-    maxLevel = level > maxLevel ? level : maxLevel;
-    maxDuration = duration > maxDuration ? duration : maxDuration;
-    var svgWidth = maxDuration * widthUnit;
-    var svgHeight = (maxLevel+1) * heightUnit;
-    d3Stage = d3.select('div#d3Stage');
-    var dataArray;
-    var gOrigin = d3Stage.select('svg')
-        .attr('width', svgWidth)
-        .attr('height', svgHeight)
-        .append('g')
-            .datum({'level':level, 'analysisArray':analysisArray})
-            .classed('echo-group', true)
-            .attr('transform', 'translate(' + '0' + ',' + String(-1*heightUnit) + ')');
-    if (quantaType === 'seconds') {
-        dataArray = PythonRange(Math.floor(duration)).map(function(el) {
-            return {'quantum':{'start':el}}; // simulate a quanta object
-        });
-        gOrigin.selectAll('.echo-second').data(dataArray).enter()
-            .append('text')
-                .classed('echo-text', true)
-                .each(function(d) { d.analysisArrayLength = Math.floor(duration); })
-                .attr('x', -1*widthUnit)
-                .attr('y', 0.75*heightUnit)
-                .text(function(d) { return [d.quantum.start,' s'].join(''); });    
-        return;
-    }
-    else {
-        dataArray = analysisArray.map(function(el) { return {'quantum':el}; })
-        gOrigin.selectAll('.echo-rect').data(dataArray).enter()
-            .append('rect')
-                .classed('echo-rect', true)
-                .each(function(d) {
-                    d.analysisArrayLength = analysisArray.length;
-                    d.playing = false;
-                })
-                .attr('x', 0*widthUnit)
-                .attr('y', 0)
-                .attr('width', function(d) {
-                    d.originalWidth = d.quantum.duration * widthUnit;
-                    return d.quantum.duration * widthUnit;
-                })
-                .attr('height', heightUnit)
-                .style('fill', fillColor)
-                .on('click', function(d) {
-                    remixPlayer.stop();
-                    var currentlyPlaying = d.playing;
-                    d3.select('div#d3Stage').selectAll('rect.echo-rect').interrupt();
-                    d3.select('div#d3Stage').selectAll('rect.echo-rect')
-                        .style('opacity', 1)
-                        .attr('x', function(d) { return d.quantum.start * widthUnit; })
-                        .attr('width', function(d) { return d.originalWidth; })
-                        .each(function(d) { d.playing = false; });
-                    if (!currentlyPlaying) {
-                        remixPlayer.play(0, d.quantum);
-                        d.playing = true;
-                        d3.select(this)
-                            .style('opacity', 0)
-                            .attr('width', 0)
-                            .transition().ease('linear').duration(function(d) { return 1000*d.quantum.duration; })
-                                .style('opacity', 1)
-                                .attr('width', function(d) { return d.originalWidth; })
-                                .each('end', function(d) { d.playing = false; });
-                    }
-                });
-    }
-}
-
-function UpdateQuanta() {
-    var transitionEaseX = 'cubic-out', transitionEaseY = 'bounce', easeX = 'linear';
-    var tempDatum;
-    d3Stage.selectAll('g.echo-group').transition()
-        .ease(transitionEaseY)
-        .duration(function(d) { return 1000; })
-        .attr('transform', function(d) {
-            var yOffset = lastQuantaOnTop ? (maxLevel-d.level)*heightUnit : d.level*heightUnit; 
-            return 'translate(' + '0' + ',' + String(yOffset) + ')';
-        })
-        .call(AllTransitionsEnded, function() {
-            d3Stage.selectAll('rect.echo-rect, text.echo-text').transition()
-                .ease(transitionEaseX)        
-                .duration(2*1000)
-                .delay(function(d,i) { return (i/d.analysisArrayLength)*1000; })
-                .attr('x', function(d) { return d.quantum.start * widthUnit; });
-        });
-}
-
-function UpdatePlayer(currentPlayer, action, quantaArray, startTime) {
-    var curTime = currentPlayer.curTime();
-    if (action === 'play') {
-        currentPlayer.play(startTime, quantaArray);
-        d3.select('#player').classed('playing', true).classed('stopped', false);
-    }
-    else if (action === 'stop') {
-        currentPlayer.stop();
-        d3.select('#player').classed('playing', false).classed('stopped', true);
-    }
-    else {
-        return;
-    }
-}
-
-function PythonRange(length) {
-    // Array(null) is [null] and not [], so we need to screen out null
-    if (!isFinite(length) || length%1!==0 || length<0 || length===null) { // must be a number and a non-negative integer
-        return [];
-    }
-    var arrayOfUndefined = Array.apply(null, Array(length)); // 'this' doesn't matter here
-    return arrayOfUndefined.map(function(_, i) { return i; });
-}
-
-function AllTransitionsEnded(transition, callback) {
-    var n = 0;
-    transition
-        .each(function() {
-            n += 1;
-        })
-        .each('end', function() {
-            n -= 1;
-            if (n === 0) {
-                callback.apply(this, arguments);
-            }
-        })
-
-
-}
-
-window.onload = InitializePage;
-</script>
-
+<script type="text/javascript" src="echoblock.js"></script>
+<link type="text/css" href="echoblock.css" rel="stylesheet">
+</head>
+<body>
 <br><br>
 <div class='row-full'>
     <div class='text-box col-left'>
         Your Track:
     </div>
-    <div class='text-box col-right' id='trackURLForm'>
-        ???
+    <div class='text-box col-right'>
+        <input type='form' id='trackURLForm' value=''></input>
+        <input type='file' id='trackURLFile'></input>
     </div>
 </div>
 <br>
@@ -281,7 +26,7 @@ window.onload = InitializePage;
         Your Echonest API Key:
     </div>
     <div class='text-box col-right'>
-        <input type='form' name='echonestAPIKeyForm' id='echonestAPIKeyForm' value='???'></input>
+        <input type='form' id='echonestAPIKeyForm' value=''></input>
     </div>
 </div>
 <br><br>

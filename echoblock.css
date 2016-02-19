@@ -1,0 +1,57 @@
+body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+div.row-full {
+    display: block;
+    min-width: 460px;
+    width: 460px;
+    height: auto;
+}
+div.col-left {
+    width: 48%; /*fraction of a fraction*/
+    float: left;
+    text-align: right;
+}
+div.col-right {
+    width: 48%; /*fraction of a fraction*/
+    float: right;
+    text-align: left;
+}
+div.col-middle {
+    width: 100%; /*fraction of a fraction*/
+    float: none;
+    text-align: center;
+}
+div#d3Stage {
+    width: 100%;
+    display: block;
+    overflow: scroll;
+}
+rect.echo-rect {
+    stroke: white;
+    stroke-width: 1px;
+    cursor: pointer;
+}
+#echonestAPIKeyForm {
+    width: 100%;
+}
+#trackURLForm {
+    width: 100%;
+}
+#trackURLFile {
+    display:block;
+    height:0;
+    width:0;
+}
+#player.stopped #stopButton {
+    display: none;
+}
+#player.playing #playButton {
+    display: none;
+}
+.not-loaded {
+    visibility: hidden;
+}
+.not-needed {
+    visibility: hidden;
+}
