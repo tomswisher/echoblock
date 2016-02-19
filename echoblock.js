@@ -7,7 +7,8 @@
 
 var echonestAPIKey, trackID, trackURL;
 trackID = 'TRCYWPQ139279B3308';
-trackURL = 'BeethovensSymphonyNo9scherzo.mp3'
+// trackURL = 'BeethovensSymphonyNo9scherzo.mp3'
+trackURL = 'andromeda_strain.mp3'
 var remixer;
 var remixPlayer;
 var track;
@@ -24,19 +25,26 @@ var d3Stage;
 function InitializePage() {
     echonestAPIKey = localStorage.getItem('echonestAPIKey') || '';
     $('#echonestAPIKeyForm').val(echonestAPIKey);
-    trackURL = localStorage.getItem('trackURL') || '';
+    // trackURL = localStorage.getItem('trackURL') || '';
     $('#trackURLForm').val(trackURL);
 
-    $('#trackURLForm').click(function() {
-        $('#trackURLFile').trigger('click');
-    });
+    // $('#trackURLForm').click(function() {
+    //     $('#trackURLFile').trigger('click');
+    // });
 
-    $('#trackURLFile').change(function(event) {
-        console.log(event.target.files[0].name);
-        console.log(event.target.files[0].webkitRelativePath);
-        trackURL = this.value.split('\\').pop();
-        $('#trackURLForm').val(trackURL);
-    });
+    // $('#trackURLFile').change(function(event) {
+    //     var file = event.target.files[0];
+    //     var reader = new FileReader();
+    //     reader.onload = (function(theFile) {
+    //         console.log(theFile);
+    //         return function(e) {
+    //             console.log(e.target);
+    //         }
+    //     })(file);
+    //     reader.readAsDataURL(file);
+    //     trackURL = this.value.split('\\').pop();
+    //     $('#trackURLForm').val(trackURL);
+    // });
     // AnalyzeTrack(); // debug
 }
 
@@ -45,8 +53,8 @@ function AnalyzeTrack() {
     var context;
     echonestAPIKey = $('#echonestAPIKeyForm').val();
     localStorage.setItem('echonestAPIKey', echonestAPIKey);
-    trackURL = $('#trackURLForm').val();
-    localStorage.setItem('trackURL', trackURL);
+    // trackURL = $('#trackURLForm').val();
+    // localStorage.setItem('trackURL', trackURL);
     var contextFunction = window.AudioContext || window.webkitAudioContext;
     if (contextFunction === undefined) {
         $('#analysisText').text('Sorry, this app needs advanced web audio. Your browser does not support it. Try the latest version of Chrome?');
@@ -136,8 +144,7 @@ function DrawQuanta(track, quantaType, fillColor, level) {
                 .on('click', function(d) {
                     remixPlayer.stop();
                     var currentlyPlaying = d.playing;
-                    d3.select('div#d3Stage').selectAll('rect.echo-rect').interrupt();
-                    d3.select('div#d3Stage').selectAll('rect.echo-rect')
+                    d3.select('div#d3Stage').selectAll('rect.echo-rect').interrupt()
                         .style('opacity', 1)
                         .attr('x', function(d) { return d.quantum.start * widthUnit; })
                         .attr('width', function(d) { return d.originalWidth; })
@@ -181,14 +188,25 @@ function UpdateQuanta() {
 }
 
 function UpdatePlayer(currentPlayer, action, quantaArray, startTime) {
-    var curTime = currentPlayer.curTime();
+    // var curTime = currentPlayer.curTime();
     if (action === 'play') {
+        currentPlayer.stop();
         currentPlayer.play(startTime, quantaArray);
         d3.select('#player').classed('playing', true).classed('stopped', false);
+        d3.select('div#d3Stage').selectAll('rect.echo-rect').interrupt()
+            .style('opacity', 1)
+            .attr('x', function(d) { return d.quantum.start * widthUnit; })
+            .attr('width', function(d) { return d.originalWidth; })
+            .each(function(d) { d.playing = false; });
     }
     else if (action === 'stop') {
         currentPlayer.stop();
         d3.select('#player').classed('playing', false).classed('stopped', true);
+        d3.select('div#d3Stage').selectAll('rect.echo-rect').interrupt()
+            .style('opacity', 1)
+            .attr('x', function(d) { return d.quantum.start * widthUnit; })
+            .attr('width', function(d) { return d.originalWidth; })
+            .each(function(d) { d.playing = false; });
     }
     else {
         return;
