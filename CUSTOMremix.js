@@ -2,6 +2,8 @@
 // Thor Kell & Paul Lamere, 12/2012
 // Based on Paul Lamere's Infinite Jukebox and assorted other javascript projects
 
+// Modified by Tom Swisher
+
 function createJRemixer(context, jquery, apiKey) {
     var $ = jquery;
     $.ajaxSetup({ cache: false });

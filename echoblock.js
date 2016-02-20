@@ -5,6 +5,7 @@
 // Song is public domain from Archive.org
 // https://archive.org/details/BeethovensSymphonyNo.9_51
 
+var stemURL = 'audio/';
 var echonestAPIKey, trackID, trackURL;
 trackID = 'TRCYWPQ139279B3308';
 // trackURL = 'BeethovensSymphonyNo9scherzo.mp3'
@@ -67,7 +68,7 @@ function AnalyzeTrack() {
         remixer = createJRemixer(context, $, echonestAPIKey);
         remixPlayer = remixer.getPlayer();
         $('#analysisText').text('Analyzing your track...');
-        remixer.remixTrackById(trackID, trackURL, function(returnedTrack, percent) {
+        remixer.remixTrackById(trackID, stemURL+trackURL, function(returnedTrack, percent) {
             track = returnedTrack;
             (function(track) {
                 requestAnimationFrame(function() {
