@@ -5,7 +5,7 @@
 // Song is public domain from Archive.org
 // https://archive.org/details/BeethovensSymphonyNo.9_51
 
-var stemURL = 'audio/';
+var stemURL = '';
 var echonestAPIKey, trackID, trackURL;
 trackID = 'TRCYWPQ139279B3308';
 // trackURL = 'BeethovensSymphonyNo9scherzo.mp3'
