@@ -9,9 +9,8 @@ var echonestAPIKey, trackID, trackURL;
 trackID = 'TRCYWPQ139279B3308';
 // trackURL = 'BeethovensSymphonyNo9scherzo.mp3'
 trackURL = 'andromeda_strain.mp3'
-var remixer;
-var remixPlayer;
-var track;
+var remixer, remixPlayer;
+var track, basicTrack;
 var remixedArray;
 
 var widthUnit = 100;
@@ -48,6 +47,10 @@ function InitializePage() {
     // AnalyzeTrack(); // debug
 }
 
+window.onload = InitializePage;
+
+// --- functions ---
+
 function AnalyzeTrack() {
     d3.select('div#d3Stage').selectAll('svg').selectAll('*').remove();
     var context;
@@ -65,8 +68,12 @@ function AnalyzeTrack() {
         remixPlayer = remixer.getPlayer();
         $('#analysisText').text('Analyzing your track...');
         remixer.remixTrackById(trackID, trackURL, function(returnedTrack, percent) {
-
             track = returnedTrack;
+            (function(track) {
+                requestAnimationFrame(function() {
+                    basicTrack = getBasicTrack(track);
+                });
+            })(track);
             if (isFinite(percent)) {
                 $('#analysisText').text('Analyzing at ' + percent + '%');
             }
@@ -225,8 +232,34 @@ function AllTransitionsEnded(transition, callback) {
                 callback.apply(this, arguments);
             }
         })
-
-
 }
 
-window.onload = InitializePage;
+function getBasicTrack(fullTrack) {
+    var basicTrack = {};
+    basicTrack['analyzer_version'] = fullTrack['analyzer_version'];
+    basicTrack['audio_md5'] = fullTrack['audio_md5'];
+    basicTrack['audio_summary'] = $.extend({}, true, fullTrack['audio_summary']);
+    basicTrack['bitrate'] = fullTrack['bitrate'];
+    basicTrack['buffer'] = $.extend(Object.create(null), true, fullTrack['buffer']);
+    basicTrack['id'] = fullTrack['id'];
+    basicTrack['md5'] = fullTrack['md5'];
+    basicTrack['samplerate'] = fullTrack['samplerate'];
+    basicTrack['status'] = fullTrack['status'];
+    basicTrack['analysis'] = {};
+    basicTrack['analysis']['meta'] = $.extend(true, {}, fullTrack['analysis']['meta']);
+    basicTrack['analysis']['track'] = $.extend(true, {}, fullTrack['analysis']['track']);
+    var quantaTypeArray = ['bars', 'beats', 'sections', 'segments', 'tatums'];
+    var excludedKeys = ['children', 'next', 'oseg', 'overlappingSegments', 'parent', 'prev', 'track'];
+    $.each(quantaTypeArray, function(i, quantaType) {
+        basicTrack['analysis'][quantaType] = [];
+        $.each(fullTrack['analysis'][quantaType], function(j, quanta) {
+            var basicQuanta = {};
+            $.each(quanta, function(key, value) {
+                if (excludedKeys.indexOf(key) !== -1) { return; }
+                basicQuanta[key] = value;
+            });
+            basicTrack['analysis'][quantaType].push(basicQuanta);
+        });
+    });
+    return basicTrack;
+}
