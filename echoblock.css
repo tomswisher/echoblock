@@ -1,8 +1,15 @@
 body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
+.title {
+    text-align: center;
+}
+div.table {
+    width: 100%;
+    text-align: center;
+}
 div.row-full {
-    display: block;
+    display: inline-block;
     min-width: 460px;
     width: 460px;
     height: auto;
@@ -10,7 +17,7 @@ div.row-full {
 div.col-left {
     width: 48%; /*fraction of a fraction*/
     float: left;
-    text-align: right;
+    text-align: left;
 }
 div.col-right {
     width: 48%; /*fraction of a fraction*/
@@ -32,6 +39,9 @@ rect.echo-rect {
     stroke-width: 1px;
     cursor: pointer;
 }
+// rect.echo-rect.playing {
+//     fill: black !important;
+// }
 #echonestAPIKeyForm {
     width: 100%;
 }

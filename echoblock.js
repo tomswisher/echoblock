@@ -14,11 +14,12 @@ var remixer, remixPlayer;
 var track, basicTrack;
 var remixedArray;
 
-var widthUnit = 100;
+var widthUnit = 200;
 var heightUnit = 25;
 var maxLevel = 0;
 var maxDuration = 0;
 var lastQuantaOnTop = true;
+var quantaAnimating = true;
 
 var d3Stage;
 
@@ -29,7 +30,7 @@ function InitializePage() {
     $('#trackURLForm').val(trackURL);
 
     // $('#trackURLForm').click(function() {
-    //     $('#trackURLFile').trigger('click');
+    //     $('#trackURLFile').trigger('mousedown');
     // });
 
     // $('#trackURLFile').change(function(event) {
@@ -53,7 +54,9 @@ window.onload = InitializePage;
 // --- functions ---
 
 function AnalyzeTrack() {
-    d3.select('div#d3Stage').selectAll('svg').selectAll('*').remove();
+    d3.select('div#d3Stage').selectAll('svg')
+        .attr('width', 0).attr('height', 0)
+        .selectAll('*').remove();
     var context;
     echonestAPIKey = $('#echonestAPIKeyForm').val();
     localStorage.setItem('echonestAPIKey', echonestAPIKey);
@@ -76,7 +79,7 @@ function AnalyzeTrack() {
                 });
             })(track);
             if (isFinite(percent)) {
-                $('#analysisText').text('Analyzing at ' + percent + '%');
+                $('#analysisText').text(percent+'%');
             }
             if (percent == 100) {
                 $('#analysisText').text('Analysis is finished, loading audio...');
@@ -149,31 +152,49 @@ function DrawQuanta(track, quantaType, fillColor, level) {
                 })
                 .attr('height', heightUnit)
                 .style('fill', fillColor)
-                .on('click', function(d) {
+                .on('mousedown', function(d) {
                     remixPlayer.stop();
                     var currentlyPlaying = d.playing;
-                    d3.select('div#d3Stage').selectAll('rect.echo-rect').interrupt()
-                        .style('opacity', 1)
-                        .attr('x', function(d) { return d.quantum.start * widthUnit; })
-                        .attr('width', function(d) { return d.originalWidth; })
-                        .each(function(d) { d.playing = false; });
+                    InterruptAllQuanta();
+                    if (quantaAnimating === true) {
+                        quantaAnimating = false;
+                        d3.select('#analyzeButton').classed('not-needed', false);
+                        return;
+                    }
                     if (!currentlyPlaying) {
                         remixPlayer.play(0, d.quantum);
                         d.playing = true;
                         d3.select(this)
-                            .style('opacity', 0)
+                            .classed('playing', true)
+                            // .style('opacity', 0)
                             .attr('width', 0)
-                            .transition().ease('linear').duration(function(d) { return 1000*d.quantum.duration; })
-                                .style('opacity', 1)
-                                .attr('width', function(d) { return d.originalWidth; })
-                                .each('end', function(d) { d.playing = false; });
+                            // .transition().ease('linear').duration(function(d) { return 1000*d.quantum.duration; })
+                            .attr('width', function(d) { return d.originalWidth; })
+                            .attr('transform', 'translate(0,0)scale(1,1)')
+                            .transition().ease('sine-in').duration(function(d) { return (1/2)*1000*d.quantum.duration; })
+                                .attr('transform', 'translate(0,'+(heightUnit/2)+')scale(1,0)')
+                            .transition().ease('sine-out').duration(function(d) { return (1/2)*1000*d.quantum.duration; })
+                                .attr('transform', 'translate(0,0)scale(1,1)')
+                                .each('end', function(d) {
+                                    d.playing = false;
+                                    d3.select(this).classed('playing', false);
+                                });
                     }
                 });
     }
 }
 
+function InterruptAllQuanta() {
+    d3.select('div#d3Stage').selectAll('rect.echo-rect,  text.echo-text').interrupt()
+        .classed('playing', false)
+        .attr('x', function(d) { return d.quantum.start * widthUnit; })
+        .attr('width', function(d) { return d.originalWidth; })
+        .each(function(d) { d.playing = false; });
+}
+
 function UpdateQuanta() {
     var transitionEaseX = 'cubic-out', transitionEaseY = 'bounce', easeX = 'linear';
+    quantaAnimating = true;
     d3Stage.selectAll('g.echo-group').transition()
         .ease(transitionEaseY)
         .duration(function(d) { return 1000; })
@@ -191,6 +212,7 @@ function UpdateQuanta() {
                 .attr('x', function(d) { return d.quantum.start * widthUnit; })
                 .call(AllTransitionsEnded, function() {
                     d3.select('#analyzeButton').classed('not-needed', false);
+                    quantaAnimating = false;
                 });
         });
 }
@@ -201,20 +223,12 @@ function UpdatePlayer(currentPlayer, action, quantaArray, startTime) {
         currentPlayer.stop();
         currentPlayer.play(startTime, quantaArray);
         d3.select('#player').classed('playing', true).classed('stopped', false);
-        d3.select('div#d3Stage').selectAll('rect.echo-rect').interrupt()
-            .style('opacity', 1)
-            .attr('x', function(d) { return d.quantum.start * widthUnit; })
-            .attr('width', function(d) { return d.originalWidth; })
-            .each(function(d) { d.playing = false; });
+        InterruptAllQuanta();
     }
     else if (action === 'stop') {
         currentPlayer.stop();
         d3.select('#player').classed('playing', false).classed('stopped', true);
-        d3.select('div#d3Stage').selectAll('rect.echo-rect').interrupt()
-            .style('opacity', 1)
-            .attr('x', function(d) { return d.quantum.start * widthUnit; })
-            .attr('width', function(d) { return d.originalWidth; })
-            .each(function(d) { d.playing = false; });
+        InterruptAllQuanta();
     }
     else {
         return;

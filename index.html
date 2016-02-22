@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Echoblock</title>
+<title>Echo-Block</title>
+<!-- by Tom Swisher -->
 <meta charset='utf-8'>
 <script type='text/javascript' src='CUSTOMremix.js'></script>
 <script type="text/javascript" src='d3.v3.min.js' charset='utf-8'></script>
@@ -10,41 +11,43 @@
 <link type="text/css" href="echoblock.css" rel="stylesheet">
 </head>
 <body>
-<br><br>
-<div class='row-full'>
-    <div class='text-box col-left'>
-        Your Track:
+<h1 class='title'>Echo-Block</h1>
+<div class='table'>
+    <div class='row-full'>
+        <div class='text-box col-left'>
+            Your Track's Filename:
+        </div>
+        <div class='text-box col-right'>
+            andromeda_strain.mp3
+            <!-- <input type='form' id='trackURLForm' value=''></input> -->
+            <!-- <input type='file' id='trackURLFile'></input> -->
+        </div>
     </div>
-    <div class='text-box col-right'>
-        andromeda_strain.mp3
-        <!-- <input type='form' id='trackURLForm' value=''></input> -->
-        <!-- <input type='file' id='trackURLFile'></input> -->
+    <br>
+    <div class='row-full'>
+        <div class='text-box col-left'>
+            Your Echonest API Key:
+        </div>
+        <div class='text-box col-right'>
+            <input type='form' id='echonestAPIKeyForm' value=''></input>
+        </div>
     </div>
-</div>
-<br>
-<div class='row-full'>
-    <div class='text-box col-left'>
-        Your Echonest API Key:
+    <br><br>
+    <div class='row-full'>
+        <div class='col-middle' id='analyzeButton'>
+            <button onClick='AnalyzeTrack()'>Analyze Your Track</button>
+        </div>
+        <div class='col-middle' id='analysisText'>
+        </div>
     </div>
-    <div class='text-box col-right'>
-        <input type='form' id='echonestAPIKeyForm' value=''></input>
-    </div>
-</div>
-<br><br>
-<div class='row-full'>
-    <div class='col-middle' id='analyzeButton'>
-        <button onClick='AnalyzeTrack()'>Analyze Your Track</button>
-    </div>
-    <div class='col-middle' id='analysisText'>
-    </div>
-</div>
-<br>
-<div class='row-full not-loaded stopped' id='player'>
-    <div class='col-middle' id='playButton'>
-        <button onClick='UpdatePlayer(remixPlayer, "play", remixedArray, 0);'>Play Your Track</button>
-    </div>
-    <div class='col-middle' id='stopButton'>
-        <button onClick='UpdatePlayer(remixPlayer, "stop", remixedArray, 0);'>Stop Your Track</button>
+    <br>
+    <div class='row-full not-loaded stopped' id='player'>
+        <div class='col-middle' id='playButton'>
+            <button onClick='UpdatePlayer(remixPlayer, "play", remixedArray, 0);'>Play Your Track</button>
+        </div>
+        <div class='col-middle' id='stopButton'>
+            <button onClick='UpdatePlayer(remixPlayer, "stop", remixedArray, 0);'>Stop Your Track</button>
+        </div>
     </div>
 </div>
 <br><br><br>
