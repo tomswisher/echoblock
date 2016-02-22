@@ -14,7 +14,7 @@ var remixer, remixPlayer;
 var track, basicTrack;
 var remixedArray;
 
-var widthUnit = 200;
+var widthUnit = 100;
 var heightUnit = 25;
 var maxLevel = 0;
 var maxDuration = 0;
@@ -154,16 +154,17 @@ function DrawQuanta(track, quantaType, fillColor, level) {
                 .attr('height', heightUnit)
                 .style('fill', fillColor)
                 .on('mousedown', function(d) {
+                    if (d.playing === true) { return; }
                     remixPlayer.stop();
-                    var currentlyPlaying = d.playing;
                     InterruptAllQuanta();
                     if (quantaAnimating === true) {
                         quantaAnimating = false;
                         d3.select('#analyzeButton').classed('not-needed', false);
                         return;
                     }
-                    if (!currentlyPlaying) {
+                    if (!d.playing) {
                         remixPlayer.play(0, d.quantum);
+                        d3.select('#player').classed('playing', false).classed('stopped', true);
                         d.playing = true;
                         d3.select(this)
                             .classed('playing', true)
@@ -172,9 +173,9 @@ function DrawQuanta(track, quantaType, fillColor, level) {
                             // .transition().ease('linear').duration(function(d) { return 1000*d.quantum.duration; })
                             .attr('width', function(d) { return d.originalWidth; })
                             .attr('transform', 'translate(0,0)scale(1,1)')
-                            .transition().ease('sine-in').duration(function(d) { return (1/2)*1000*d.quantum.duration; })
+                            .transition().ease('sine-in').duration(function(d) { return Math.max(140, (1/2)*1000*d.quantum.duration); })
                                 .attr('transform', 'translate(0,'+(heightUnit/2)+')scale(1,0)')
-                            .transition().ease('sine-out').duration(function(d) { return (1/2)*1000*d.quantum.duration; })
+                            .transition().ease('sine-out').duration(function(d) { return Math.max(140, (1/2)*1000*d.quantum.duration); })
                                 .attr('transform', 'translate(0,0)scale(1,1)')
                                 .each('end', function(d) {
                                     d.playing = false;
@@ -190,7 +191,8 @@ function InterruptAllQuanta() {
     d3.select('div#d3Stage').selectAll('rect.echo-rect,  text.echo-text').interrupt()
         .classed('playing', false)
         .attr('x', function(d) { return d.quantum.start * widthUnit; })
-        .attr('width', function(d) { return d.originalWidth; })
+        // .attr('width', function(d) { return d.originalWidth; })
+        .attr('transform', 'translate(0,0)scale(1,1)')
         .each(function(d) { d.playing = false; });
 }
 
