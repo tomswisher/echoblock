@@ -12,7 +12,7 @@ div.row-full {
     display: inline-block;
     min-width: 460px;
     width: 460px;
-    height: auto;
+    height: 24px;
 }
 div.col-left {
     width: 48%; /*fraction of a fraction*/

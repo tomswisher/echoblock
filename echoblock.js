@@ -54,6 +54,7 @@ window.onload = InitializePage;
 // --- functions ---
 
 function AnalyzeTrack() {
+    d3.select('#player').classed('not-loaded', true)
     d3.select('div#d3Stage').selectAll('svg')
         .attr('width', 0).attr('height', 0)
         .selectAll('*').remove();
@@ -91,7 +92,7 @@ function AnalyzeTrack() {
                         remixedArray.push(track.analysis.beats[i]);
                     // }
                 }
-                $('#analysisText').text('Ready');
+                $('#analysisText').text('');
                 d3.selectAll('.not-loaded').classed('not-loaded', false);
                 var index = 0;
                 DrawQuanta(track, 'seconds', 'black', index++);
@@ -185,6 +186,7 @@ function DrawQuanta(track, quantaType, fillColor, level) {
 }
 
 function InterruptAllQuanta() {
+    d3.select('#analyzeButton').classed('not-needed', false);
     d3.select('div#d3Stage').selectAll('rect.echo-rect,  text.echo-text').interrupt()
         .classed('playing', false)
         .attr('x', function(d) { return d.quantum.start * widthUnit; })
