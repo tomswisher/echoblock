@@ -6,7 +6,7 @@
 // https://archive.org/details/BeethovensSymphonyNo.9_51
 
 var stemURL = '';
-var echonestAPIKey, trackID, trackURL;
+var echonestAPIKey, trackID, trackURL, disableAnimation;
 trackID = 'TRCYWPQ139279B3308';
 // trackURL = 'BeethovensSymphonyNo9scherzo.mp3'
 trackURL = 'andromeda_strain.mp3'
@@ -20,14 +20,26 @@ var maxLevel = 0;
 var maxDuration = 0;
 var lastQuantaOnTop = true;
 var quantaAnimating = true;
-
 var d3Stage;
 
+function updateLocalStorage(key, inputType) {
+    var element = event.srcElement;
+    if (inputType === 'checkbox') {
+        localStorage.setItem(key, element.checked);    
+    } else if (inputType === 'form') {
+        localStorage.setItem(key, element.value);
+    }
+}
+
 function InitializePage() {
-    echonestAPIKey = localStorage.getItem('echonestAPIKey') || '';
+    echonestAPIKey = (localStorage.getItem('echonestAPIKey') === null) ? '' : localStorage.getItem('echonestAPIKey');
     $('#echonestAPIKeyForm').val(echonestAPIKey);
+
     // trackURL = localStorage.getItem('trackURL') || '';
-    $('#trackURLForm').val(trackURL);
+    // $('#trackURLForm').val(trackURL);
+
+    disableAnimation = (localStorage.getItem('disableAnimation') === null) ? true : JSON.parse(localStorage.getItem('disableAnimation'));
+    $('#disableAnimationCB').prop('checked', disableAnimation);
 
     // $('#trackURLForm').click(function() {
     //     $('#trackURLFile').trigger('mousedown');
@@ -59,10 +71,16 @@ function AnalyzeTrack() {
         .attr('width', 0).attr('height', 0)
         .selectAll('*').remove();
     var context;
+    
     echonestAPIKey = $('#echonestAPIKeyForm').val();
     localStorage.setItem('echonestAPIKey', echonestAPIKey);
+    
     // trackURL = $('#trackURLForm').val();
     // localStorage.setItem('trackURL', trackURL);
+
+    disableAnimation = $('#disableAnimationCB').prop('checked');
+    localStorage.setItem('disableAnimation', disableAnimation);
+
     var contextFunction = window.AudioContext || window.webkitAudioContext;
     if (contextFunction === undefined) {
         $('#analysisText').text('Sorry, this app needs advanced web audio. Your browser does not support it. Try the latest version of Chrome?');
@@ -201,7 +219,7 @@ function UpdateQuanta() {
     quantaAnimating = true;
     d3Stage.selectAll('g.echo-group').transition()
         .ease(transitionEaseY)
-        .duration(function(d) { return 1000; })
+        .duration(function() { return (disableAnimation === true) ? 0 : 1000; })
         .attr('transform', function(d) {
             var yOffset = lastQuantaOnTop ? (maxLevel-d.level)*heightUnit : d.level*heightUnit; 
             return 'translate(' + '0' + ',' + String(yOffset) + ')';
@@ -210,9 +228,9 @@ function UpdateQuanta() {
             d3Stage.selectAll('g.echo-group').selectAll('rect.echo-rect, text.echo-text').transition()
                 .ease(transitionEaseX)        
                 // .duration(function(d,i) { return Math.min(4*1000-i, 0); })
-                .duration(3000)
+                .duration(function() { return (disableAnimation === true) ? 0 : 3000; })
                 // .delay(function(d,i) { return Math.min(4*1000, i); })
-                .delay(function(d,i,j) { return 300*j+(i/d.analysisArrayLength)*1000; })
+                .delay(function(d,i,j) { return (disableAnimation === true) ? 0 : 300*j+(i/d.analysisArrayLength)*1000; })
                 .attr('x', function(d) { return d.quantum.start * widthUnit; })
                 .call(AllTransitionsEnded, function() {
                     d3.select('#analyzeButton').classed('not-needed', false);

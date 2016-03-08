@@ -5,10 +5,10 @@
 <!-- by Tom Swisher -->
 <meta charset='utf-8'>
 <script type='text/javascript' src='CUSTOMremix.js'></script>
-<script type="text/javascript" src='d3.v3.min.js' charset='utf-8'></script>
-<script type="text/javascript" src='jquery-2.2.0.min.js'></script>  
-<script type="text/javascript" src="echoblock.js"></script>
-<link type="text/css" href="echoblock.css" rel="stylesheet">
+<script type='text/javascript' src='d3.v3.min.js' charset='utf-8'></script>
+<script type='text/javascript' src='jquery-2.2.0.min.js'></script>  
+<script type='text/javascript' src='echoblock.js'></script>
+<link type='text/css' href='echoblock.css' rel='stylesheet'>
 </head>
 <body>
 <h1 class='title'>Echo-Block</h1>
@@ -29,8 +29,19 @@
             Your Echonest API Key:
         </div>
         <div class='text-box col-right'>
-            <input type='form' id='echonestAPIKeyForm' value=''></input>
+            <input type='form' id='echonestAPIKeyForm' onchange='updateLocalStorage("echonestAPIKey", "form")'></input>
         </div>
+    </div>
+    <br><br>
+    <div class='row-full'>
+        <form><label>
+            <div class='text-box col-left'>
+                Disable Load Animation:
+            </div>
+            <div class='text-box col-right'>
+                <input type='checkbox' id='disableAnimationCB' onchange='updateLocalStorage("disableAnimation", "checkbox")'></input>
+            </div>
+        </label></form>
     </div>
     <br><br>
     <div class='row-full'>
