@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Echo-Block</title>
+<title>Echoblock</title>
 <!-- by Tom Swisher -->
 <meta charset='utf-8'>
-<script type='text/javascript' src='CUSTOMremix.js'></script>
-<script type='text/javascript' src='d3.v3.min.js' charset='utf-8'></script>
-<script type='text/javascript' src='jquery-2.2.0.min.js'></script>  
-<script type='text/javascript' src='echoblock.js'></script>
+<script type='text/javascript' charset="utf-8" src='CUSTOMremix.js'></script>
+<script type='text/javascript' charset="utf-8" src='d3.v3.min.js' charset='utf-8'></script>
+<script type='text/javascript' charset="utf-8" src='jquery-2.2.0.min.js'></script>  
+<!-- <script type="text/javascript" charset="utf-8" src="wavesurfer.min.js"></script> -->
+<script type='text/javascript' charset="utf-8" src='echoblock.js'></script>
 <link type='text/css' href='echoblock.css' rel='stylesheet'>
 </head>
 <body>
-<h1 class='title'>Echo-Block</h1>
+<h1 class='title'>Echoblock</h1>
 <div class='table'>
     <div class='row-full'>
         <div class='text-box col-left'>
@@ -29,7 +30,7 @@
             Your Echonest API Key:
         </div>
         <div class='text-box col-right'>
-            <input type='form' id='echonestAPIKeyForm' onchange='updateLocalStorage("echonestAPIKey", "form")'></input>
+            <input type='form' id='echonestAPIKeyForm' onchange='updateSessionStorage("echonestAPIKey", "form")'></input>
         </div>
     </div>
     <br><br>
@@ -39,7 +40,7 @@
                 Disable Load Animation:
             </div>
             <div class='text-box col-right'>
-                <input type='checkbox' id='disableAnimationCB' onchange='updateLocalStorage("disableAnimation", "checkbox")'></input>
+                <input type='checkbox' id='disableAnimationCB' onchange='updateSessionStorage("disableAnimation", "checkbox")'></input>
             </div>
         </label></form>
     </div>

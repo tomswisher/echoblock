@@ -2,8 +2,6 @@
 
 // Adapted from remix.js example code by Paul Lamere + tkell (Thor) + Echonest
 // https://github.com/echonest/remix.js/blob/master/examples
-// Song is public domain from Archive.org
-// https://archive.org/details/BeethovensSymphonyNo.9_51
 
 var stemURL = '';
 var echonestAPIKey, trackID, trackURL, disableAnimation;
@@ -22,23 +20,23 @@ var lastQuantaOnTop = true;
 var quantaAnimating = true;
 var d3Stage;
 
-function updateLocalStorage(key, inputType) {
+function updateSessionStorage(key, inputType) {
     var element = event.srcElement;
     if (inputType === 'checkbox') {
-        localStorage.setItem(key, element.checked);    
+        sessionStorage.setItem(key, element.checked);    
     } else if (inputType === 'form') {
-        localStorage.setItem(key, element.value);
+        sessionStorage.setItem(key, element.value);
     }
 }
 
 function InitializePage() {
-    echonestAPIKey = (localStorage.getItem('echonestAPIKey') === null) ? '' : localStorage.getItem('echonestAPIKey');
+    echonestAPIKey = (sessionStorage.getItem('echonestAPIKey') === null) ? '' : sessionStorage.getItem('echonestAPIKey');
     $('#echonestAPIKeyForm').val(echonestAPIKey);
 
-    // trackURL = localStorage.getItem('trackURL') || '';
+    // trackURL = sessionStorage.getItem('trackURL') || '';
     // $('#trackURLForm').val(trackURL);
 
-    disableAnimation = (localStorage.getItem('disableAnimation') === null) ? true : JSON.parse(localStorage.getItem('disableAnimation'));
+    disableAnimation = (sessionStorage.getItem('disableAnimation') === null) ? true : JSON.parse(sessionStorage.getItem('disableAnimation'));
     $('#disableAnimationCB').prop('checked', disableAnimation);
 
     // $('#trackURLForm').click(function() {
@@ -73,13 +71,13 @@ function AnalyzeTrack() {
     var context;
     
     echonestAPIKey = $('#echonestAPIKeyForm').val();
-    localStorage.setItem('echonestAPIKey', echonestAPIKey);
+    sessionStorage.setItem('echonestAPIKey', echonestAPIKey);
     
     // trackURL = $('#trackURLForm').val();
-    // localStorage.setItem('trackURL', trackURL);
+    // sessionStorage.setItem('trackURL', trackURL);
 
     disableAnimation = $('#disableAnimationCB').prop('checked');
-    localStorage.setItem('disableAnimation', disableAnimation);
+    sessionStorage.setItem('disableAnimation', disableAnimation);
 
     var contextFunction = window.AudioContext || window.webkitAudioContext;
     if (contextFunction === undefined) {
