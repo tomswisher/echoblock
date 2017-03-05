@@ -1,4 +1,6 @@
-(No longer functional due to Spotify shutting down Echo Nest's services)
+(Backup of my gist hosted on bl.ocks.org/tomswisher)
+
+Note: Echoblock is no longer functional due to Spotify shutting down Echo Nest's services.
 
 Music analysis visualizer based on the (now dead) Echo Nest API.
 
