@@ -1,6 +1,6 @@
 (No longer functional due to Spotify shutting down Echo Nest's services)
 
-Music analysis visualizer that was based on the (dead) Echo Nest API.
+Music analysis visualizer based on the (now dead) Echo Nest API.
 
 Adapted from remix.js example code by Paul Lamere + tkell (Thor) + Echonest
 https://github.com/echonest/remix.js/blob/master/examples
